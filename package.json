@@ -4,6 +4,11 @@
   "private": true,
   "type": "module",
   "license": "MIT",
-  "engines": { "node": ">=22" },
-  "scripts": { "test": "node scripts/validate.mjs" }
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node scripts/validate.mjs",
+    "dev": "node scripts/dev.mjs"
+  }
 }
