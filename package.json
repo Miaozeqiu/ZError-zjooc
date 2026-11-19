@@ -8,7 +8,12 @@
     "node": ">=22"
   },
   "scripts": {
-    "test": "node scripts/validate.mjs && node --test scripts/*.test.mjs",
-    "dev": "node scripts/dev.mjs"
+    "build": "node scripts/build-scripts.mjs",
+    "build:publish": "node scripts/build-scripts.mjs --publish",
+    "dev": "node scripts/build-scripts.mjs --serve",
+    "test": "node scripts/validate.mjs && npm run build && node --test scripts/*.test.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.5"
   }
 }

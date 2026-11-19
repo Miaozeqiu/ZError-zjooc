@@ -3,7 +3,9 @@ import { strict as assert } from 'node:assert'
 import { test } from 'node:test'
 import { runInNewContext } from 'node:vm'
 
-const source = await readFile(new URL('../site-tools/login.js', import.meta.url), 'utf8')
+const manifestUrl = new URL('../dist/script-manifest.json', import.meta.url)
+const manifest = JSON.parse(await readFile(manifestUrl, 'utf8'))
+const source = await readFile(new URL(manifest.bundles.login.url, manifestUrl), 'utf8')
 const adapter = runInNewContext(source + '\nZErrorSiteScript')
 const page = { kind: 'form', document: 'current', origin: 'https://background.zjooc.cn', path: '/gxptLogin', challenge: true }
 

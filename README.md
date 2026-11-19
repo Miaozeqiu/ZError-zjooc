@@ -26,8 +26,11 @@ skills/zjooc/
 
 通用规则采用 MIT，保留原 ZError 版权声明。图标取自对应网站，仅作网站标识，品牌权利归其权利人。
 
-维护时只保存已验证的通用步骤，不保存账号、密码、Token、个人学习记录、具体课程答案或临时 DOM 引用。不提供题卡、解析器或模拟测试网页。校验：`npm test`。
+维护时只保存已验证的通用步骤，不保存账号、密码、Token、个人学习记录、具体课程答案或临时 DOM 引用。不提供题卡、解析器或模拟测试网页。校验：`npm ci` 后执行 `npm test`。
 
 ## 工具发布
 
-`site-tools/tools.json` 定义 Agent 工具，`site-tools/*.js` 提供隔离脚本。Open 从同一 Git 提交同步这些文件。凭据、页面动作和提交授权由 ZError 宿主核验。
+`site-tools/tools.json` 定义 Agent 工具。登录、播放和答题脚本在 `src/` 中维护，由 esbuild 打包为供 Open 分发的 JavaScript。凭据、页面动作和提交授权由 ZError 宿主核验。
+
+- 本地执行 `npm run dev`，通过 `http://127.0.0.1:8818/experience.json` 加载。保存源码后会自动打包，ZError 下次启动流程时可加载新产物。
+- 发布前执行 `npm run build:publish`，将源码和生成的 `site-tools/*.js` 放在同一提交中推送。CI 会核对产物与源码一致。
