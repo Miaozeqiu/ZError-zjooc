@@ -27,3 +27,7 @@ skills/zjooc/
 通用规则采用 MIT，保留原 ZError 版权声明。图标取自对应网站，仅作网站标识，品牌权利归其权利人。
 
 维护时只保存已验证的通用步骤，不保存账号、密码、Token、个人学习记录、具体课程答案或临时 DOM 引用。不提供题卡、解析器或模拟测试网页。校验：`npm test`。
+
+## 工具发布
+
+`site-tools/tools.json` 定义 Agent 工具，`site-tools/*.js` 提供隔离脚本。Open 从同一 Git 提交同步这些文件。凭据、页面动作和提交授权由 ZError 宿主核验。

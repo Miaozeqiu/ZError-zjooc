@@ -1,0 +1,89 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "browser_answer_zjooc",
+      "description": "在浙学作业或测验：自动登录提示、匹配或生成答案、逐题填写并回读。每批五题，按 nextOffset 和 assignment_id 继续；单题模式按用户范围点下一题。needs_review 需核对，保留已有作答，不交卷。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "assignment_id": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "question_range": {
+            "type": "object",
+            "properties": {
+              "start": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "end": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "start",
+              "end"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "browser_play_zjooc",
+      "description": "在浙学小节播放页。默认启动当前视频并监控；title 精确指定本节一条视频；mode=section 按页签顺序播完本小节所有未完成视频。连续播放时一次调用即可。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "current",
+              "section"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "description": "仅限 current 模式，填页面显示的视频全名。"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "browser_login_zjooc",
+      "description": "安全登录在浙学。先不传参数检查登录态或获取验证码图片。看清验证码后传 captcha_id 和 captcha_code，宿主负责提交并核对是否登录。看不清时等待用户验证。账号密码由宿主管理。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "captcha_id": {
+            "type": "string",
+            "description": "本轮登录工具回执中的验证码图片标识。"
+          },
+          "captcha_code": {
+            "type": "string",
+            "description": "当前图片上看到的 5 位字母或数字，保留大小写。"
+          },
+          "wait_for_verification": {
+            "type": "boolean",
+            "description": "无法看清图片时设为 true，等待用户在网页完成验证。"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+]

@@ -5,7 +5,7 @@ import { createServer } from 'node:http'
 const skill = new URL('../skills/zjooc/', import.meta.url)
 const read = path => readFile(new URL(path, skill))
 const port = Number(process.env.ZERROR_SCRIPT_PORT || 8818)
-const scripts = new URL('../site-scripts/', import.meta.url)
+const scripts = new URL('../site-tools/', import.meta.url)
 const digest = value => createHash('sha256').update(value).digest('hex')
 
 async function scriptBundles() {
@@ -35,7 +35,8 @@ async function experience() {
   })
   const paths = ['SKILL.md', 'site-graph.json', ...refs.filter(name => /^[\w-]+\.md$/.test(name)).sort().map(name => 'references/' + name)]
   const files = Object.fromEntries(await Promise.all(paths.map(async path => [path, (await read(path)).toString('utf8')])))
-  const data = { website, files, icon, scriptManifest: './script-manifest.json' }
+  const tools = JSON.parse(await readFile(new URL('tools.json', scripts), 'utf8'))
+  const data = { website, files, icon, tools, scriptManifest: './script-manifest.json' }
   return { ...data, revision: digest(JSON.stringify(data)) }
 }
 
