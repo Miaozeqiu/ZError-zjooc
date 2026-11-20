@@ -1,36 +1,30 @@
 # ZError · 在浙学网站能力包
 
-在浙学（zjooc.cn）的可复用操作经验、导航图谱与网站图标。通用经验整理自 ZError 的在浙学内置资源，使用标准 `SKILL.md`，需要 ZError 提供的浏览器、凭据与事件等待工具。
+本仓库维护在浙学的网站规则、经验及执行流程。Open 从同一 Git 提交分发 `skills/zjooc/` 的文档、图谱、图标和隔离编译包 `runtime.json`；软件只提供通用浏览器操作、凭据隔离和授权校验，不内置本站业务流程。
 
-## 仓库内容
+## 开发
 
-```text
-skills/zjooc/
-├── website.json        网站身份与图标路径
-├── SKILL.md            操作经验
-├── site-graph.json     导航图谱
-└── assets/icon.ico     在浙学图标
+```sh
+npm ci
+npm run dev
 ```
 
-支持网站仓库导入的 ZError 版本可在「设置 → Agent → 网站 → 导入 GitHub 仓库」中粘贴本仓库链接，预览网站名称、域名和图标后确认导入。软件会缓存完整版本，离线可用；Agent 的修改保存到本地分支，不自动上传。较旧版本不支持该入口。
+网站经验地址继续使用 `http://127.0.0.1:8818/experience.json`。不增加 `/v2` 路径或版本参数。保存源码后自动重编译，下一次工具调用使用校验后的新包；当前调用固定原代码版本。修改文档下次请求即生效。
 
-## 网站仓库格式
+`npm run build` 输出 `dist/experience.json` 与 `dist/runtime.json`；`npm run build:publish` 同时更新提交到仓库的 `skills/zjooc/runtime.json`。只发布编译后的 IIFE、SHA-256 及严格工具定义，不向客户端下发 TypeScript 源码；没有旧版脚本产物或回退流程。包内 `apiVersion:2` 只用于格式校验。
 
-在 `skills/<id>/`、`.agents/skills/<id>/` 或仓库根目录中提供 `website.json`：
+## 工具与边界
 
-```json
-{ "version": 1, "id": "zjooc", "name": "在浙学", "host": "zjooc.cn", "icon": "assets/icon.ico" }
+命名空间为 `browser_site_zjooc__`：`login`、`catalog`、`read_questions`、`answer_questions`、`study`、`read_document`、`discussion`。脚本通过固定的 document/media/credentials 命令驱动网页，不使用网页 eval、网络或文件系统。验证码原图交给模型识别，凭据始终由宿主隔离。
+
+读题、填答和复核按小批次进行；未知题型保留给 Agent 核对，不保存、交卷或伪造完成状态。题库服务请求、网络答案监听、字体解码尚无对应通用宿主接口，未假装迁移这些能力；详见 [作答边界](skills/zjooc/references/homework.md)。原生浏览器仍需实站回归；本仓库 CI 负责编译契约及确定性流程样例。
+
+## 校验与发布
+
+```sh
+npm test
+npm run build:publish
+git diff --exit-code -- skills/zjooc/runtime.json
 ```
 
-同目录必须有 `SKILL.md` 与 `site-graph.json`。Skill 的 name、图谱的 id 和网站 id 一致；图谱 host 与网站 host 一致。图标必须是仓库内 `assets/` 下的 PNG、ICO、JPEG、WebP 或 GIF 文件，最多 256 KB，不使用外链。可选细则放在 `references/<名称>.md`。
-
-通用规则采用 MIT，保留原 ZError 版权声明。图标取自对应网站，仅作网站标识，品牌权利归其权利人。
-
-维护时只保存已验证的通用步骤，不保存账号、密码、Token、个人学习记录、具体课程答案或临时 DOM 引用。不提供题卡、解析器或模拟测试网页。校验：`npm ci` 后执行 `npm test`。
-
-## 工具发布
-
-`site-tools/tools.json` 定义 Agent 工具。登录、播放和答题脚本在 `src/` 中维护，由 esbuild 打包为供 Open 分发的 JavaScript。凭据、页面动作和提交授权由 ZError 宿主核验。
-
-- 本地执行 `npm run dev`，通过 `http://127.0.0.1:8818/experience.json` 加载。保存源码后会自动打包，ZError 下次启动流程时可加载新产物。
-- 发布前执行 `npm run build:publish`，将源码和生成的 `site-tools/*.js` 放在同一提交中推送。CI 会核对产物与源码一致。
+CI 使用与软件相同的 QuickJS 0.32、内存和执行限额运行产物，检查编译包和源码一致。发布经验仓库不会发布客户端或部署 Open 服务。MIT，见 [LICENSE](LICENSE)。

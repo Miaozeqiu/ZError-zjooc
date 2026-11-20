@@ -14,8 +14,10 @@
       "summary": "手机号登录。",
       "row": 0,
       "col": -1,
-      "patterns": ["zjooc\\.cn.*login", "passport"],
-      "parserIds": ["login"]
+      "patterns": [
+        "zjooc\\.cn.*login",
+        "passport"
+      ]
     },
     {
       "id": "course-list",
@@ -24,7 +26,10 @@
       "summary": "我学的课。点课名进学习。",
       "row": 0,
       "col": 0,
-      "patterns": ["ucenter/student/course/build", "usercenter/student/course/build"]
+      "patterns": [
+        "ucenter/student/course/build",
+        "usercenter/student/course/build"
+      ]
     },
     {
       "id": "course-study-plan",
@@ -34,25 +39,49 @@
       "structure": "常见 Element UI el-tree。叶子 icon-shipin=视频，icon-iconset0387=文档；以当前快照中的真实节名和控件为准。",
       "row": 0,
       "col": 1,
-      "patterns": ["course/study/[^/]+/plan$", "/plan$"],
-      "parserIds": ["study"]
+      "patterns": [
+        "course/study/[^/]+/plan$",
+        "/plan$"
+      ]
     },
     {
       "id": "course-study-player",
       "title": "播放页",
       "path": "/plan/detail",
-      "summary": "定位真实视频控件，确认播放时间推进后 browser_watch，等待事件再继续。",
+      "summary": "定位真实视频控件，确认播放时间推进后 browser_site_zjooc__study，等待事件再继续。",
       "structure": "常见页面内 <video>；若实际存在播放器 iframe，按最新快照的精确 frameId/loaderId 定位。",
       "row": 1,
       "col": 1,
-      "patterns": ["course/study/[^/]+/plan/detail", "/plan/detail"],
-      "parserIds": ["study"]
+      "patterns": [
+        "course/study/[^/]+/plan/detail",
+        "/plan/detail"
+      ]
     }
   ],
   "edges": [
-    { "from": "login", "to": "course-list", "label": "登录", "kind": "forward" },
-    { "from": "course-list", "to": "course-study-plan", "label": "进课", "kind": "forward" },
-    { "from": "course-study-plan", "to": "course-study-player", "label": "打开任务点", "kind": "forward" },
-    { "from": "course-study-player", "to": "course-study-plan", "label": "回目录", "kind": "back" }
+    {
+      "from": "login",
+      "to": "course-list",
+      "label": "登录",
+      "kind": "forward"
+    },
+    {
+      "from": "course-list",
+      "to": "course-study-plan",
+      "label": "进课",
+      "kind": "forward"
+    },
+    {
+      "from": "course-study-plan",
+      "to": "course-study-player",
+      "label": "打开任务点",
+      "kind": "forward"
+    },
+    {
+      "from": "course-study-player",
+      "to": "course-study-plan",
+      "label": "回目录",
+      "kind": "back"
+    }
   ]
 }
