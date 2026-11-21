@@ -19,5 +19,8 @@
     "esbuild": "0.25.5",
     "jsdom": "30.0.1",
     "quickjs-emscripten-core": "0.32.0"
+  },
+  "dependencies": {
+    "htmlparser2": "10.0.0"
   }
 }

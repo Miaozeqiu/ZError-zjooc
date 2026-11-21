@@ -30,3 +30,23 @@ export const viewer = {
   viewport: '.plan-detailvideo #viewerContainer, .plan-detailvideo .document-viewer, #viewerContainer',
   marker: '.plan-detailvideo [aria-current="page"], #numPages, .swiper-slide-active', pageSelect: '',
 }
+
+export const paperRules = { title: '.common_look_title h6, .common_look_header .ft18, .top_title p', totalLabels: '.common_look_main .el-col', indexItems: '.index_box li' }
+export function paperForURL(value) {
+  const match = /^https:\/\/www\.zjooc\.cn(\/[^?#]*)/.exec(value)
+  if (!match) return null
+  const parts = match[1].split('/').filter(Boolean)
+  if (parts.at(-2) === 'processStatus' && /^\d+$/.test(parts.at(-1))) parts.splice(-2)
+  const prefix = parts[0] === 'course' ? 0 : ['ucenter', 'usercenter'].includes(parts[0]) && parts[1] === 'student' ? 2 : -1
+  if (prefix < 0 || parts.length !== prefix + 6 || parts[prefix] !== 'course' || parts[prefix + 1] !== 'study' || !['homework', 'exam', 'singleQuestion'].includes(parts[prefix + 3]) || !['do', 'result'].includes(parts[prefix + 4]) || ![parts[prefix + 2], parts[prefix + 5]].every(value => /^[\w-]+$/.test(value))) return null
+  const [courseId, kind, stage, paperId] = parts.slice(prefix + 2)
+  return { courseId, kind, stage, paperId, single: kind === 'singleQuestion', url: 'https://www.zjooc.cn' + match[1], key: [courseId, kind, paperId].join('/') }
+}
+Object.assign(questions, { stem: ':is(.questiono-header h6 .processing_img,.questiono-header .processing_img,.question_title > span)', choiceText: ':is(.processing_img,p)',
+  reviewMarker: '.common_test_correct', reviewLabel: '正确答案', number: '.questiono-header b', singleNumber: '.left_container > .question_title p',
+  alternateType: 10, subjectTypes: { single: 1, multiple: 2, judgement: 3, completion: 7 } })
+
+export const answerService = { lookup: '/originalJson', upload: '/upload' }
+
+
+export const automations = [{ event: 'page', tool: 'sync_review' }]
