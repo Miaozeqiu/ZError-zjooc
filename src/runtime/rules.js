@@ -5,8 +5,11 @@ export const login = {
   captcha: '.login_box .forms.code input[name=captchaCode]',
 }
 export const catalog = {
-  // Course/homework list markup has not been verified; use the generic browser for those pages.
-  courses: null, homework: null,
+  // 学生课程列表已在真实页面核对；只点击卡片内的“进入学习”，不点击退出或证书按钮。
+  courses: { path: '^/(?:ucenter|usercenter)/student/course/build/list/?$', rows: '.main_list .list-item01',
+    heading: '.list_fr > .first > h6', open: '.list_fr button.el-button--primary', openText: '进入学习',
+    next: '.jxel-pagination .btn-next' },
+  homework: null,
   chapters: { rows: '.el-tree-node.is-leaf > .el-tree-node__content', heading: '.el-tree-node__label', completed: '.complete' },
 }
 export const questions = {

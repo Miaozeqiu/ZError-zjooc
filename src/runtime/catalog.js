@@ -1,10 +1,11 @@
-import { child, documents, nodes, query, one, click, pause, stableId, result } from './host.js'
+import { child, documents, nodes, query, one, click, pause, stableId, result, urlParts } from './host.js'
 import { catalog } from './rules.js'
 
 export function* catalogFlow(args) {
   const rule = catalog[args.kind]
   if (!rule) return result('unsupported', '该类型没有仓库规则。')
-  let all = yield* documents()
+  const inScope = document => !rule.path || new RegExp(rule.path).test(urlParts(document.url).path)
+  let all = (yield* documents()).filter(inScope)
   if (args.next_page) {
     let changed = false
     for (const document of all) {
@@ -14,7 +15,7 @@ export function* catalogFlow(args) {
     }
     if (!changed) return result('no_next_page', '未观察到可用的下一页控件。')
     yield* pause(250)
-    all = yield* documents()
+    all = (yield* documents()).filter(inScope)
   }
   for (const document of all) {
     const found = yield* query(document, rule.rows, 40, args.offset || 0)
@@ -35,7 +36,14 @@ export function* catalogFlow(args) {
       let matches = items.filter(item => args.open_id ? item.id === args.open_id : normalized(item.title) === normalized(args.title))
       if (!matches.length && args.title) matches = items.filter(item => normalized(item.title).includes(normalized(args.title)))
       if (matches.length !== 1) return result('ambiguous', '没有唯一匹配；请按返回的名称和 id 选择。', { items: publicItems, total: found.total })
-      yield* click(document, matches[0].node)
+      let target = matches[0].node
+      if (rule.open) {
+        const targets = (yield* nodes(document, child(target, rule.open), 8))
+          .filter(node => node.visible && !node.disabled && (!rule.openText || node.text.replace(/\s+/g, '') === rule.openText))
+        if (targets.length !== 1) return result('blocked', '未确认卡片内唯一可用的进入学习按钮，不点击其他操作。', { items: publicItems })
+        target = targets[0]
+      }
+      yield* click(document, target)
       return result('opened', '已点击刚读取的唯一条目；请用对应工具核对落地页。', { items: publicItems.filter(item => item.id === matches[0].id) })
     }
     return result('listed', '当前网页列表，未把未读取的分页视为已完成。', { items: publicItems,

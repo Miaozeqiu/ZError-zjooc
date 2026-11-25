@@ -1,3 +1,4 @@
+import { catalog, discussion } from './rules.js'
 const text = { type: 'string' }, flag = { type: 'boolean' }
 const integer = (minimum, maximum) => ({ type: 'integer', minimum, maximum })
 const array = (items, maxItems) => ({ type: 'array', items, maxItems })
@@ -23,8 +24,8 @@ export const tools = [
     {}, [], [...read, ...service, 'document.compare']),
   tool('login', '登录当前站点。凭据由宿主在聊天表单中收集并安全填写，模型不可读取。返回 captcha 时识别附图，以相同 captcha_id 和 captcha_code 再调用；验证码或密码错误按实际网页分别处理。只有 loggedIn=true 表示已确认登录。',
     { captcha_id: text, captcha_code: text, replace_credentials: flag }, [], [...read, ...wait, ...click, 'document.navigate', 'document.image', 'document.fill', 'credentials.request', 'credentials.fill']),
-  tool('catalog', '读取当前学生页面的课程、作业或章节列表。按 title 唯一匹配或 open_id 打开刚读取的条目；重复名称返回候选。offset 分批读取，next_page 只点击已确认的网页下一页。打开后用对应工具核对落地页。',
-    { kind: { type: 'string', enum: ['courses', 'homework', 'chapters'] }, offset: integer(0, 10000), title: text, teacher: text, open_id: text, next_page: flag }, ['kind'], [...read, ...click, ...wait]),
+  tool('catalog', '读取本站已适配的学生列表，支持类型以 kind 枚举为准。按 title 唯一匹配或 open_id 打开刚读取的条目；重复名称返回候选。offset 分批读取，next_page 只点击已确认的网页下一页。课程仅点击进入学习，打开后核对落地页。',
+    { kind: { type: 'string', enum: Object.keys(catalog).filter(kind => catalog[kind]) }, offset: integer(0, 10000), title: text, open_id: text, next_page: flag }, ['kind'], [...read, ...click, ...wait]),
   tool('read_questions', '只读当前作业或章节测验的小批题干、选项、实填值与页面公布的解析，每次最多八题，并同步软件题目面板。保留 question id 用于填写；含图、截断、混淆字体或复杂题型不自动填写。用户要求自动作答时使用 auto_answer。',
     { question_range: range, assignment_id: text, offset: integer(0, 10000), limit: integer(1, 8) }, [], [...read, 'document.compare', 'questions.publish']),
   tool('answer_questions', '填写 Agent 已核实的答案并逐题回读。使用 read_questions 刚返回的 question_id 和当前选项字母或 blanks；保留冲突的已有作答，拒绝变化的题目和不支持题型。不会保存或交卷。',
@@ -35,4 +36,4 @@ export const tools = [
     { read_only: flag }, [], [...read, ...wait, ...click, 'document.scroll', 'document.select']),
   tool('discussion', '读取当前章节讨论题目和最多六条匿名回复。用户已要求回复时，由 Agent 独立组织正文，再携带当前 discussion_id 和 reply 调用；发布后回读，结果不明时不自动重发。',
     { discussion_id: text, reply: text }, [], [...read, ...wait, ...click, 'document.fill', 'document.compare', 'workflow.checkpoint']),
-]
+].filter(tool => tool.name !== 'discussion' || discussion)

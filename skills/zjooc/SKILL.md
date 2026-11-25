@@ -10,7 +10,7 @@ license: MIT
 
 - 登录调用 `browser_site_zjooc__login`。账号密码只在聊天中的安全表单填写，等待用户点击「继续」。模型不会读取密码。仅 `loggedIn=true` 表示已核对成功。
 - 返回 `captcha` 时识别附带的验证码原图，携带同一个 `captcha_id` 和 `captcha_code` 再调用。密码错误与验证码失效分开处理，不能重复提交错误密码。验证码变化或文档更换后重新获取。
-- 列表使用 `browser_site_zjooc__catalog`，`kind` 为 `courses`、`homework` 或 `chapters`。按 `offset` 继续当前页，网页分页用 `next_page`。`open_id` 来自刚读取的条目，按名称打开须唯一匹配。
+- 学生课程和章节列表使用 `browser_site_zjooc__catalog`，`kind` 为 `courses` 或 `chapters`。按 `offset` 继续当前页，网页分页用 `next_page`。`open_id` 来自刚读取的条目，按名称打开须唯一匹配。课程仅点击卡片内“进入学习”，不触及退出课程或证书按钮。作业列表尚未适配，使用真实页面菜单进入后再读取题目。
 - 用户要求作答时使用 `browser_site_zjooc__auto_answer`，每批最多四题，按回执的 `assignment_id` 与 `next_offset` 续批；用户限定题号时传 `question_range={start,end}`，不得扩大范围。只读使用 `browser_site_zjooc__read_questions`（最多八题）；手工核实后的答案可用 `browser_site_zjooc__answer_questions` 填写并回读。实填状态自动显示在软件题目面板；`verified` 仅表示实填一致，不表示答案正确或已交卷。
 - 解析采集由 `sync_review` 页面自动任务执行，无需 Agent 轮询。只使用完整且可靠的官方答案；不上传个人作答、分数或学生资料。后台不弹登录、不调用模型；题库未登录时由作答工具请求应用登录。
 - 当前章节使用 `browser_site_zjooc__study`。`read_only=true` 只复核，`current_only=true` 限定当前小节，`video_only=true` 限定媒体。视频在一次工具调用中等待事件，之后重新检查平台标记。遇到测验或讨论交回 Agent 处理，再继续原用户范围。

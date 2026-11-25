@@ -148,6 +148,44 @@ test('ambiguous catalog titles do not click and opening uses a freshly observed 
     assert.equal((await execute('catalog', { kind, open_id: listed.items[1].id }, io)).status, 'opened')
   } finally { io.close() }
 })
+
+const courseListUrl = 'https://www.zjooc.cn/ucenter/student/course/build/list'
+function courseCard(title, disabled = false) {
+  return `<div class="list-item01"><div class="list_fr ml20"><div class="clearfix first"><h6 class="fl mt5 of_eno">${title}</h6></div><div class="clearfix mt15 three"><button class="el-button el-button--primary" ${disabled ? 'disabled' : ''}><span>进入学习</span></button><button class="el-button el-button--primary">申请证书</button><button class="el-button el-button--danger">退出课程</button></div></div></div>`
+}
+test('课程规则读取真实卡片结构并仅打开唯一课程的进入学习按钮', { skip: cx }, async () => {
+  const io = host('<div class="main_list">' + courseCard('合成课程甲') + courseCard('合成课程乙') + '</div>', courseListUrl)
+  const clicked = []
+  io.onClick = node => clicked.push(node.textContent)
+  try {
+    const listed = await execute('catalog', { kind: 'courses' }, io)
+    assert.equal(listed.status, 'listed')
+    assert.deepEqual(listed.items.map(item => item.title), ['合成课程甲', '合成课程乙'])
+    const opened = await execute('catalog', { kind: 'courses', open_id: listed.items[1].id }, io)
+    assert.equal(opened.status, 'opened')
+    assert.deepEqual(clicked, ['进入学习'])
+    assert.equal(io.events.filter(event => event.op === 'document.click').length, 1)
+  } finally { io.close() }
+})
+test('课程重名、按钮禁用或不在学生列表时不误点击退出课程、证书或分页', { skip: cx }, async () => {
+  for (const { cards, url, expected } of [
+    { cards: courseCard('合成课程') + courseCard('合成课程'), url: courseListUrl, expected: 'ambiguous' },
+    { cards: courseCard('合成课程', true), url: courseListUrl, expected: 'blocked' },
+    { cards: courseCard('合成课程'), url: 'https://www.zjooc.cn/admin/course', expected: 'not_found' },
+  ]) {
+    const io = host('<div class="main_list">' + cards + '</div>', url)
+    try {
+      assert.equal((await execute('catalog', { kind: 'courses', title: '合成课程' }, io)).status, expected)
+      assert(!io.events.some(event => event.op === 'document.click'))
+    } finally { io.close() }
+  }
+})
+test('工具清单只声明已经存在的列表规则和已适配的讨论能力', { skip: cx }, () => {
+  const spec = artifact.tools.find(tool => tool.name === 'catalog')
+  assert.deepEqual(spec.parameters.properties.kind.enum, Object.keys(catalog).filter(kind => catalog[kind]))
+  assert.deepEqual(spec.parameters.properties.kind.enum, ['courses', 'chapters'])
+  assert(!artifact.tools.some(tool => tool.name === 'discussion'))
+})
 test('read-only inspection of a completed chapter also cannot navigate', async () => {
   const io = videoHost()
   if (cx) io.window.document.querySelector('.posCatalog_active').insertAdjacentHTML('beforeend', '<i class="icon_Completed"></i>')
