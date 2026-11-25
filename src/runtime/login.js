@@ -3,6 +3,10 @@ import { login } from './rules.js'
 
 function* observe(capture = false) {
   const all = yield* documents(), document = all[0], location = urlParts(document.url)
+  // Vue 尚未挂载时，密码框仍是普通文本框、验证码也没有真实图片；不能开始填密。
+  if (location.host === login.formHost && login.bootstrap && (yield* nodes(document, login.bootstrap, 1)).length) {
+    return { kind: 'bootstrapping', document, ...location }
+  }
   const input = { operation: 'observe', origin: location.origin, path: location.path, captureCaptcha: capture }
   const rules = login.observe(input).rules
   const matches = []
@@ -93,11 +97,18 @@ export function* loginFlow(args) {
   } else if (login.modern && !state.modern) {
     yield* call('document.navigate', { document: state.document, url: login.entry })
   }
+  let refreshed = false
   for (let i = 0; i < 12 && !['form', 'rejected'].includes(state.kind); i++) {
+    if (state.kind === 'bootstrapping' && !refreshed) {
+      // 已实测登录页偶发依赖超时；只刷新这一份未初始化的登录文档一次。
+      yield* call('document.navigate', { document: state.document, url: state.document.url })
+      refreshed = true
+    }
     yield* pause(); state = yield* observe()
     if (state.kind === 'space') return result('logged_in', '已核对登录状态。', { loggedIn: true })
     if (state.kind === 'challenge') return result('verification_required', '请在网页完成验证。', { loggedIn: false })
   }
+  if (state.kind === 'bootstrapping') return result('page_not_ready', '登录页依赖尚未初始化；已刷新一次仍未就绪，停止登录，不填写账号密码。', { loggedIn: false })
   if (!['form', 'rejected'].includes(state.kind)) return result('unrecognized', '尚未确认登录表单，请核对当前页面。', { loggedIn: false })
   yield* fill(state, args.replace_credentials === true || state.rejection === 'credentials' || state.rejected === true)
   const filled = yield* observe(true)

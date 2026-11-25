@@ -70,6 +70,27 @@ test('captcha is bound to the document and pixels; missing pairs never submit', 
     assert(!io.events.some(event => event.op === 'document.click'))
   } finally { io.close() }
 })
+
+test('登录页依赖未初始化时只刷新一次，表单就绪后才安全填写并读取验证码', { skip: cx }, async () => {
+  const pending = '<div class="login_box"><input id="login_name" type="text"><input id="password" v-cloak><button class="dologin">{%loginInfo%}</button></div>'
+  const io = host(pending, loginUrl)
+  io.onWait = () => { if (io.events.some(event => event.op === 'document.navigate')) io.window.document.body.innerHTML = loginHtml }
+  try {
+    const first = await execute('login', {}, io)
+    assert.equal(first.status, 'captcha')
+    assert.equal(io.events.filter(event => event.op === 'document.navigate').length, 1)
+    assert(io.events.findIndex(event => event.op === 'credentials.request') > io.events.findIndex(event => event.op === 'document.navigate'))
+    assert(!io.events.some(event => event.op === 'document.click'))
+  } finally { io.close() }
+})
+test('登录页刷新后仍未初始化时明确停止，不向普通文本密码框填写凭据', { skip: cx }, async () => {
+  const io = host('<div class="login_box"><input id="password" v-cloak></div>', loginUrl)
+  try {
+    assert.equal((await execute('login', {}, io)).status, 'page_not_ready')
+    assert.equal(io.events.filter(event => event.op === 'document.navigate').length, 1)
+    assert(!io.events.some(event => event.op.startsWith('credentials.') || event.op === 'document.click'))
+  } finally { io.close() }
+})
 test('a rejected password opens the replacement form once and does not loop submissions', { skip: cx }, async () => {
   const io = host(loginHtml, loginUrl)
   io.onClick = node => { if (node.matches(login.submit)) io.window.document.querySelector('#error_msg').textContent = '用户名或密码错误' }

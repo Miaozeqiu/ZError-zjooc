@@ -1,6 +1,7 @@
 import { observation } from './loginRules.js'
 export const login = {
   observe: observation, formHost: 'background.zjooc.cn', entry: 'https://background.zjooc.cn/gxptLogin', homeLink: '.front-header-top .ta-r a',
+  bootstrap: '.login_box input#password[v-cloak]',
   account: '.login_box input#login_name[type=text]', password: '.login_box input#password[type=password]', submit: '.login_box button.dologin:enabled',
   captcha: '.login_box .forms.code input[name=captchaCode]',
 }
