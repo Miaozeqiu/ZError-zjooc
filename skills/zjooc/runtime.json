@@ -796,7 +796,7 @@
     },
     {
       "name": "catalog",
-      "description": "读取本站已适配的学生列表，支持类型以 kind 枚举为准。按 title 唯一匹配或 open_id 打开刚读取的条目；重复名称返回候选。offset 分批读取，next_page 只点击已确认的网页下一页。课程仅点击进入学习，打开后核对落地页。",
+      "description": "读取本站已适配的学生列表。chapters 返回叶子学习单元，total 是学习单元数，不是顶层章数。按 title 唯一匹配或 open_id 打开刚读取的条目；重复名称返回候选。offset 分批读取，next_page 只点击已确认的网页下一页。课程仅点击进入学习，打开后核对落地页。",
       "parameters": {
         "type": "object",
         "properties": {
