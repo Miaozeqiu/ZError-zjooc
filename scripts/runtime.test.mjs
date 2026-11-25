@@ -193,7 +193,7 @@ test('read-only chapter inspection never starts media or moves a tab', async () 
 })
 test('ambiguous catalog titles do not click and opening uses a freshly observed id', async () => {
   const rows = cx ? '<ul id="courselistArea"><li><h3>合成课程</h3></li><li><h3>合成课程</h3></li></ul>'
-    : '<div class="el-tree-node is-leaf"><div class="el-tree-node__content"><span class="el-tree-node__label">合成课程</span></div></div>'.repeat(2)
+    : '<div class="el-tree-node is-expanded"><div class="el-tree-node__content"><span class="el-tree-node__expand-icon is-leaf"></span><div><span>合成课程</span></div></div></div>'.repeat(2)
   const kind = cx ? 'courses' : 'chapters', io = host(rows, space)
   try {
     const listed = await execute('catalog', { kind, title: '合成课程' }, io)
@@ -204,6 +204,20 @@ test('ambiguous catalog titles do not click and opening uses a freshly observed 
 })
 
 const courseListUrl = 'https://www.zjooc.cn/ucenter/student/course/build/list'
+test('真实目录结构只返回学习叶子，支持超过四十项的分页且不点击目录', { skip: cx }, async () => {
+  const leaves = Array.from({ length: 42 }, (_, i) => `<div class="el-tree-node is-expanded"><div class="el-tree-node__content"><span class="el-tree-node__expand-icon is-leaf"></span><div><span><i class="iconfont ${i === 41 ? 'complete' : ''}"></i>学习单元${i + 1}</span></div></div><div class="el-tree-node__children"></div></div>`).join('')
+  const io = host('<div class="el-tree"><div class="el-tree-node is-expanded"><div class="el-tree-node__content"><span class="el-tree-node__expand-icon"></span><div><span>第一章</span></div></div><div class="el-tree-node__children">' + leaves + '</div></div></div>', space)
+  try {
+    const first = await execute('catalog', { kind: 'chapters' }, io)
+    assert.equal(first.status, 'listed'); assert.equal(first.total, 42)
+    assert.equal(first.items.length, 40); assert.equal(first.next_offset, 40)
+    assert.equal(first.items[0].title, '学习单元1')
+    const last = await execute('catalog', { kind: 'chapters', offset: first.next_offset }, io)
+    assert.equal(last.items.length, 2); assert.equal(last.next_offset, -1)
+    assert.equal(last.items[1].status, 'complete')
+    assert(!io.events.some(event => event.op === 'document.click'))
+  } finally { io.close() }
+})
 function courseCard(title, disabled = false) {
   return `<div class="list-item01"><div class="list_fr ml20"><div class="clearfix first"><h6 class="fl mt5 of_eno">${title}</h6></div><div class="clearfix mt15 three"><button class="el-button el-button--primary" ${disabled ? 'disabled' : ''}><span>进入学习</span></button><button class="el-button el-button--primary">申请证书</button><button class="el-button el-button--danger">退出课程</button></div></div></div>`
 }
@@ -279,7 +293,7 @@ test('continues from a completed section to the next freshly observed leaf', asy
     doc.querySelector('#coursetree').insertAdjacentHTML('beforeend', '<div id="cur2" class="posCatalog_select"><span>合成下一节</span></div>')
   } else {
     doc.querySelector('.icon-shipin').classList.add('complete')
-    doc.body.insertAdjacentHTML('beforeend', '<div class="el-tree-node is-leaf is-current"><div class="el-tree-node__content"><span class="complete">第一节</span></div></div><div class="el-tree-node is-leaf"><div class="el-tree-node__content">第二节</div></div>')
+    doc.body.insertAdjacentHTML('beforeend', '<div class="el-tree-node is-expanded is-current"><div class="el-tree-node__content"><span class="el-tree-node__expand-icon is-leaf"></span><span class="complete">第一节</span></div></div><div class="el-tree-node is-expanded"><div class="el-tree-node__content"><span class="el-tree-node__expand-icon is-leaf"></span>第二节</div></div>')
   }
   io.onClick = () => {
     if (cx) { doc.querySelector('.posCatalog_active').classList.remove('posCatalog_active'); doc.querySelector('#cur2').classList.add('posCatalog_active') }
