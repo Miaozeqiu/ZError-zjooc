@@ -71,6 +71,39 @@ test('captcha is bound to the document and pixels; missing pairs never submit', 
   } finally { io.close() }
 })
 
+test('提交后查询遇到跳转时重新观察新文档，不重放提交或凭据', { skip: cx }, async () => {
+  const io = host(loginHtml, loginUrl), original = io.execute.bind(io)
+  let submitted = false, raced = false
+  io.onClick = node => { if (node.matches(login.submit)) submitted = true }
+  io.execute = async (op, args) => {
+    if (submitted && !raced && op === 'document.query') {
+      raced = true; io.navigate(space, loggedHtml)
+      return { ok: false, reason: 'document_changed', error: '查询期间文档已更换' }
+    }
+    return original(op, args)
+  }
+  try {
+    const first = await execute('login', {}, io)
+    assert.equal((await execute('login', { captcha_id: first.captcha_id, captcha_code: 'ABCDE' }, io)).loggedIn, true)
+    assert(raced)
+    assert.equal(io.events.filter(event => event.op === 'document.click').length, 1)
+    assert.equal(io.events.filter(event => event.op === 'credentials.request').length, 1)
+  } finally { io.close() }
+})
+test('只读重试有上限，授权错误不会被当作跳转重试', { skip: cx }, async () => {
+  for (const reason of ['document_changed', 'permission_denied']) {
+    const io = host(loginHtml, loginUrl), original = io.execute.bind(io)
+    let queries = 0
+    io.execute = async (op, args) => op === 'document.query'
+      ? (++queries, { ok: false, reason, error: reason }) : original(op, args)
+    try {
+      await assert.rejects(execute('login', {}, io), new RegExp(reason))
+      assert.equal(queries, reason === 'document_changed' ? 3 : 1)
+      assert(!io.events.some(event => event.op.startsWith('credentials.') || event.op === 'document.click'))
+    } finally { io.close() }
+  }
+})
+
 test('登录页依赖未初始化时只刷新一次，表单就绪后才安全填写并读取验证码', { skip: cx }, async () => {
   const pending = '<div class="login_box"><input id="login_name" type="text"><input id="password" v-cloak><button class="dologin">{%loginInfo%}</button></div>'
   const io = host(pending, loginUrl)

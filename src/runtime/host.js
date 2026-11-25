@@ -8,7 +8,11 @@ export const sameDocument = (a, b) => a && b && a.frameId === b.frameId && a.loa
 export const result = (status, message = '', extra = {}) => ({ status, message, ...extra })
 export function* call(op, args = {}) {
   const receipt = yield { op, args }
-  if (!receipt || receipt.ok === false || receipt.error || receipt.denied) throw new Error(String(receipt?.error || receipt?.reason || op + ' failed'))
+  if (!receipt || receipt.ok === false || receipt.error || receipt.denied) {
+    const error = new Error(String(receipt?.error || receipt?.reason || op + ' failed'))
+    error.code = receipt?.reason
+    throw error
+  }
   return receipt
 }
 export function* documents() {

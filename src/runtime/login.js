@@ -1,7 +1,7 @@
 import { call, documents, nodes, one, click, pause, urlParts, sameDocument, result } from './host.js'
 import { login } from './rules.js'
 
-function* observe(capture = false) {
+function* observeOnce(capture = false) {
   const all = yield* documents(), document = all[0], location = urlParts(document.url)
   // Vue 尚未挂载时，密码框仍是普通文本框、验证码也没有真实图片；不能开始填密。
   if (location.host === login.formHost && login.bootstrap && (yield* nodes(document, login.bootstrap, 1)).length) {
@@ -31,6 +31,16 @@ function* observe(capture = false) {
       : found.some(node => node.visible && (rule.kind !== 'editable' || !node.disabled)))
   }
   return { ...login.observe({ ...input, matches }), document, ...location, image }
+}
+function* observe(capture = false) {
+  for (let attempt = 0; ; attempt++) {
+    try { return yield* observeOnce(capture) }
+    catch (error) {
+      // 提交后的跳转可能恰好发生在只读查询期间；只重新读取文档，绝不重放提交或填密。
+      if (error.code !== 'document_changed' || attempt >= 2) throw error
+      yield* pause(250)
+    }
+  }
 }
 const challengeId = state => state.image ? JSON.stringify([state.document.frameId, state.document.loaderId, state.document.url, state.image.image_id]) : ''
 function captcha(state) {
